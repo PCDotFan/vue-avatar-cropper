@@ -29,6 +29,9 @@
       uploadUrl: {
         type: String,
       },
+      aspectRatio: {
+        type: String,
+      },
       uploadHeaders: {
         type: Object,
       },
@@ -95,7 +98,7 @@
       createCropper() {
         let image = document.querySelector('.avatar-cropper-image-container img')
         this.cropper = new Cropper(image, {
-          aspectRatio: 1,
+          aspectRatio: this.aspectRatio,
           autoCropArea: 1,
           viewMode: 1,
           movable: false,
