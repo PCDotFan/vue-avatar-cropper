@@ -16,6 +16,11 @@
 <script>
   import 'cropperjs/dist/cropper.css'
   import Cropper from 'cropperjs'
+  import axios from 'axios'
+  import VueAxios from 'vue-axios'
+
+  Vue.use(VueAxios, axios)
+
 
   export default {
     props: {
@@ -29,19 +34,12 @@
       uploadUrl: {
         type: String,
       },
-      aspectRatio: {
-        type: String,
-      },
       uploadHeaders: {
         type: Object,
       },
       uploadFormName: {
         type: String,
         default: 'file'
-      },
-      uploaded: {
-        type: Function,
-        required: true
       },
       uploadFormData: {
         type: Object,
@@ -71,7 +69,7 @@
       },
       submit() {
         if (this.uploadUrl) {
-          this.uploadImage(this.uploaded)
+          this.uploadImage()
         } else if (this.uploadHandler) {
           this.uploadHandler(this.cropper)
         } else {
@@ -102,17 +100,16 @@
       createCropper() {
         let image = document.querySelector('.avatar-cropper-image-container img')
         this.cropper = new Cropper(image, {
-          aspectRatio: Number(this.aspectRatio),
+          aspectRatio: 1,
           autoCropArea: 1,
           viewMode: 1,
           movable: false,
           zoomable: false,
         })
       },
-      uploadImage(callback) {
+      uploadImage() {
         this.cropper.getCroppedCanvas().toBlob((blob) => {
           let form = new FormData()
-          let xhr = new XMLHttpRequest()
           let data = Object.assign({}, this.uploadFormData)
 
           data[this.uploadFormName] = blob
@@ -121,24 +118,12 @@
             form.append(key, data[key])
           }
 
+          this.axios.post(this.uploadUrl, form).then((req) => {
+            this.$emit('uploaded', req)
+          }).catch(err => {
+            console.error('Error: ', err)
+          })
 
-          xhr.open('POST', this.uploadUrl, true)
-
-          for (let header in this.uploadHeaders) {
-            xhr.setRequestHeader(header, this.uploadHeaders[header])
-          }
-
-          xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-              var response = JSON.parse(xhr.responseText)
-              if (xhr.status === 200) {
-                callback(response)
-              } else {
-                throw new Error('Image upload fail.', xhr)
-              }
-            }
-          }
-          xhr.send(form);
         })
       }
     },
