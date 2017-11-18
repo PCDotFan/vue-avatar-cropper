@@ -39,6 +39,10 @@
         type: String,
         default: 'file'
       },
+      uploaded: {
+        type: Function,
+        required: true
+      },
       uploadFormData: {
         type: Object,
         default() {
@@ -67,7 +71,7 @@
       },
       submit() {
         if (this.uploadUrl) {
-          this.uploadImage()
+          this.uploadImage(this.uploaded)
         } else if (this.uploadHandler) {
           this.uploadHandler(this.cropper)
         } else {
@@ -105,7 +109,7 @@
           zoomable: false,
         })
       },
-      uploadImage() {
+      uploadImage(callback) {
         this.cropper.getCroppedCanvas().toBlob((blob) => {
           let form = new FormData()
           let xhr = new XMLHttpRequest()
@@ -117,7 +121,6 @@
             form.append(key, data[key])
           }
 
-          this.$emit('uploading', form, xhr)
 
           xhr.open('POST', this.uploadUrl, true)
 
@@ -129,7 +132,7 @@
             if (xhr.readyState === 4) {
               var response = JSON.parse(xhr.responseText)
               if (xhr.status === 200) {
-                this.$emit('uploaded', response, form, xhr)
+                callback(response)
               } else {
                 throw new Error('Image upload fail.', xhr)
               }
